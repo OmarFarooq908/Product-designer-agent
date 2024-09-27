@@ -4,8 +4,8 @@ import os
 
 # Importing environment variables
 load_dotenv()
-OPEN_AI_KEY = os.getenv['OPENAI_API_KEY']
-OPENAI_MODEL_NAME = os.getenv['OPENAI_MODEL_NAME']
+OPEN_AI_KEY = os.getenv('OPENAI_API_KEY')
+OPENAI_MODEL_NAME = os.getenv('OPENAI_MODEL_NAME')
 
 # Setting up foundational llm
 my_llm = LLM(
@@ -15,24 +15,34 @@ my_llm = LLM(
 
 """
 Flow of Agents is as following:
+    Requirements Parser Agent -------------------------------->Content Formatter Agent
     Requirements Parser Agent --> User Flow Generator Agent --> Content Formatter Agent --> Prototyping Helper Agent
     User Flow Generator Agent --> Notification Pipeline Agent
 """
 requirements_parser_agent = Agent(
-    role ='Your job is to be the requirements analyst for the team. You excel at understanding abstract product descriptions and turning them into structured components like features, roles, and workflows. You are the first step in transforming the boss\'s vision into actionable steps.',
-    goal='Your objective is to extract and organize key features, user roles, and workflows from the product information. Your goal is to transform raw ideas into clear, structured user stories and task flows that can be used by other agents in the design process.',
-    backstory="""You've been trained to process large amounts of text and identify the most important elements, like a detective piecing together clues. You work closely with the team to ensure no critical information is overlooked, helping everyone understand the product's requirements from day one.""",
+    role='Your job is to be the requirements analyst for the team. You excel at understanding abstract product descriptions and turning them into structured components like features, roles, and workflows. You are the first step in transforming the boss\'s vision into actionable steps.',
+    goal='Your objective is to extract and organize key features, user roles, and workflows from the product information: {raw_product_description}. Your goal is to transform raw ideas into clear, structured user stories and task flows that can be used by other agents in the design process.',
+    backstory="""You've been trained to process large amounts of text and identify the most important elements, like a detective piecing together clues. You work closely with the team to ensure no critical information is overlooked, helping everyone understand the product's requirements from day one: {raw_product_description}.""",
     llm=my_llm,
     allow_delegation=True,
     verbose=True
 )
 
 flow_generator_agent = Agent(
-    role='You have been trained to process large amounts of text and identify the most important elements, like a detective piecing together clues. You work closely with the team to ensure no critical information is overlooked, helping everyone understand the product\'s requirements from day one.',
+    role='You are a user journey expert, trained to process large amounts of text and identify the most important elements, like a detective piecing together clues. You work closely with the team to ensure no critical information is overlooked, helping everyone understand the product\'s requirements from day one.',
     goal='Your mission is to take user stories and generate detailed user flow diagrams. You need to map out each step of interaction for different user personas, making sure that the product\'s features are accessible and intuitive for each type of user.',
     backstory='You have been part of many product design teams, and you understand the importance of a smooth user journey. Your visual mind helps everyone see how different users will navigate the product, ensuring nothing is missed or confusing for the end user.',
     llm=my_llm,
     allow_delegation=True,
+    verbose=True
+)
+# Create the mermaid_code_agent
+mermaid_code_agent = Agent(
+    role='You are a diagramming expert, specializing in converting detailed workflows and user flows into visual representations using Mermaid syntax. You understand the nuances of user interactions and know how to translate these into diagrams effectively.',
+    goal='Your mission is to take the provided user flows and convert them into Mermaid code, which can be used to visualize the flow of users through the product interface.',
+    backstory='You have spent a significant amount of time working with technical teams to create detailed diagrams, ensuring all elements are represented correctly in visual form. You excel at turning abstract workflows into clear, easy-to-understand diagrams using Mermaid syntax.',
+    llm=my_llm,
+    allow_delegation=False,
     verbose=True
 )
 
@@ -41,7 +51,7 @@ content_formatter_agent = Agent(
     goal='Your task is to format user stories and feature descriptions into UI-ready content. You need to make sure that buttons, notifications, and all interactive elements are described in a way that is easy for users to understand and interact with.',
     backstory='You have spent a long time fine-tuning your communication skills, ensuring that every word serves its purpose. You help make complex systems feel intuitive, ensuring the product speaks the same language as its users.',
     llm=my_llm,
-    allow_delegation=False,
+    allow_delegation=True,
     verbose=True
 )
 
